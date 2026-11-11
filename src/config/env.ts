@@ -13,6 +13,21 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
+
+  DATABASE_HOST: z.string().min(1).default("127.0.0.1"),
+
+  DATABASE_PORT: z.coerce.number().int().min(1).max(65535).default(5432),
+
+  DATABASE_USER: z.string().min(1),
+
+  DATABASE_PASSWORD: z.string(),
+
+  DATABASE_NAME: z.string().min(1),
+
+  DATABASE_SSL: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
 });
 
 const result = envSchema.safeParse(process.env);
