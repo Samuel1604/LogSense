@@ -1,14 +1,11 @@
-import { unlink } from "node:fs/promises";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
+import { beforeEach, describe, expect, it, vi} from "vitest";
 
 import { AnalysisController } from "../../../src/modules/analyses/analysis.controller.js";
 import type { Analysis } from "../../../src/modules/analyses/entities/analysis.entity.js";
 import type { AnalysisService } from "../../../src/modules/analyses/services/analysis.service.js";
+import type { AnalysisStorgae } from "../../../src/modules/analyses/storage/analysis-storage.js";
 
-vi.mock("node:fs/promises", () => ({
-  unlink: vi.fn(),
-}));
 
 describe("AnalysisController", () => {
   const analysis = {
@@ -23,7 +20,11 @@ describe("AnalysisController", () => {
     createAnalysis: vi.fn()
   } as unknown as AnalysisService;
 
-  const controller = new AnalysisController(analysisService);
+  const analysisStorage = {
+    deleteFile: vi.fn(),
+  } as unknown as AnalysisStorage;
+
+  const controller = new AnalysisController(analysisService, analysisStorage);
 
   const response = {
     status: vi.fn().mockReturnThis(),
@@ -82,12 +83,12 @@ describe("AnalysisController", () => {
   });
 
   describe("createAnalysis", () => {
-    it("removes the uploaded file when analysis creation fails", async () => {
+   it("removes the uploaded file when analysis creation fails", async () => {
       const error = new Error("Database connection failed");
       const filePath = "/tmp/logsense/uploads/test.log";
 
       vi.mocked(analysisService.createAnalysis).mockRejectedValue(error);
-      vi.mocked(unlink).mockResolvedValue(undefined);
+      vi.mocked(analysisStorage.deleteFile).mockResolvedValue(undefined);
 
       const request = {
         file: {
@@ -99,7 +100,7 @@ describe("AnalysisController", () => {
 
       await controller.createAnalysis(request, response, next);
 
-      expect(unlink).toHaveBeenCalledWith(filePath);
+      expect(analysisStorage.deleteFile).toHaveBeenCalledWith(filePath);
       expect(next).toHaveBeenCalledWith(error);
       expect(response.status).not.toHaveBeenCalled();
     });

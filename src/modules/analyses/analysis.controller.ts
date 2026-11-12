@@ -1,11 +1,15 @@
-import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 
 import type { AnalysisService } from "./services/analysis.service.js";
+import type { AnalysisStorage } from "./storage/analysis-storage.js";
 import { AppError } from "../../shared/errors/app-error.js";
 
 export class AnalysisController {
-  constructor(private readonly analysisService: AnalysisService) {}
+  constructor(
+    private readonly analysisService: AnalysisService,
+    private readonly analysisStorage: AnalysisStorage,
+  )
+   {}
 
   getAnalysis = async (
     req: Request<{ id: string }>,
@@ -52,7 +56,7 @@ export class AnalysisController {
     } catch (error) {
       if (req.file?.path) {
         try {
-          await unlink(req.file.path);
+          await this.analysisStorage.deleteFile(req.file.path);
         } catch (cleanupError) {
           // Don't replace the original error with a cleanup error.
         }
