@@ -28,6 +28,14 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+
+  REDIS_HOST: z.string().min(1).default("127.0.0.1"),
+
+  REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
+
+  REDIS_PASSWORD: z.string().optional(),
+
+  REDIS_DB: z.coerce.number().int().min(0).default(0),
 });
 
 const result = envSchema.safeParse(process.env);
